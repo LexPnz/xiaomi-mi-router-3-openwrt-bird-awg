@@ -108,7 +108,8 @@ jobs:
             CONFIG_PACKAGE_luci \
             CONFIG_PACKAGE_luci-app-firewall \
             CONFIG_PACKAGE_luci-theme-bootstrap \
-            CONFIG_PACKAGE_rpcd-mod-rrdns; do
+            CONFIG_PACKAGE_rpcd-mod-rrdns \
+            CONFIG_PACKAGE_kmod-ipt-offload; do
             if ! grep -qx "${option}=y" .config; then
               echo "::error::Required local-build option missing after defconfig: ${option}=y"
               exit 1
