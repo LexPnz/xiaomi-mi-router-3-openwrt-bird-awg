@@ -77,9 +77,7 @@ jobs:
         run: |
           set -eux
           ./scripts/feeds update -a
-          ./scripts/feeds install -p routing bird3 bird3c
-          ./scripts/feeds install -p packages htop iperf3 wireguard-tools
-          ./scripts/feeds install -p luci luci-proto-wireguard
+          ./scripts/feeds install -a
 
           cp "$GITHUB_WORKSPACE/config/.config" .config
 
@@ -103,6 +101,21 @@ jobs:
           make defconfig
 
           echo "=== Проверка обязательных пакетов после defconfig ==="
+          for option in \
+            CONFIG_PACKAGE_bind-dig \
+            CONFIG_PACKAGE_bind-host \
+            CONFIG_PACKAGE_mtr-nojson \
+            CONFIG_PACKAGE_tracertools \
+            CONFIG_PACKAGE_mc \
+            CONFIG_PACKAGE_luci \
+            CONFIG_PACKAGE_luci-app-firewall \
+            CONFIG_PACKAGE_luci-theme-bootstrap \
+            CONFIG_PACKAGE_rpcd-mod-rrdns; do
+            if ! grep -qx "${option}=y" .config; then
+              echo "::error::Required local-build option missing after defconfig: ${option}=y"
+              exit 1
+            fi
+          done
           grep -E '^(CONFIG_PACKAGE_(bird3|wireguard-tools|luci-proto-wireguard)=y)$' .config || true
 
           for option in \
