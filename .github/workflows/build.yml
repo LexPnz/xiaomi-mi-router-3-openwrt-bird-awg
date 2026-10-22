@@ -76,11 +76,19 @@ jobs:
         working-directory: openwrt
         run: |
           set -eux
-          cp "$GITHUB_WORKSPACE/config/.config" .config
           ./scripts/feeds update -a
           ./scripts/feeds install -p routing bird3 bird3c
           ./scripts/feeds install -p packages htop iperf3 wireguard-tools
           ./scripts/feeds install -p luci luci-proto-wireguard
+
+          cp "$GITHUB_WORKSPACE/config/.config" .config
+
+          echo "=== Проверка BIRD3 после копирования конфигурации ==="
+          grep -E '^CONFIG_PACKAGE_(bird3|bird3c)=y$' .config
+          grep -qx 'CONFIG_PACKAGE_bird3=y' .config || {
+            echo "::error::bird3 missing immediately after copying config"
+            exit 1
+          }
 
           echo "=== Диагностика пакета BIRD3 до defconfig ==="
           echo "--- feed list ---"
