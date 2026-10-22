@@ -78,7 +78,9 @@ jobs:
           set -eux
           cp "$GITHUB_WORKSPACE/config/.config" .config
           ./scripts/feeds update -a
-          ./scripts/feeds install bird3 bird3c htop iperf3 luci-proto-wireguard wireguard-tools
+          ./scripts/feeds install -p routing bird3 bird3c
+          ./scripts/feeds install -p packages htop iperf3 wireguard-tools
+          ./scripts/feeds install -p luci luci-proto-wireguard
 
           echo "=== Диагностика пакета BIRD3 до defconfig ==="
           echo "--- feed list ---"
