@@ -79,6 +79,17 @@ jobs:
           cp "$GITHUB_WORKSPACE/config/.config" .config
           ./scripts/feeds update -a
           ./scripts/feeds install bird3 bird3c htop iperf3 luci-proto-wireguard wireguard-tools
+
+          echo "=== Диагностика пакета BIRD3 до defconfig ==="
+          echo "--- feed list ---"
+          ./scripts/feeds list -i | grep -E '^(bird3|bird3c) ' || true
+          echo "--- Makefile candidates ---"
+          find package/feeds package -path '*/bird3/Makefile' -o -path '*/bird3c/Makefile' 2>/dev/null || true
+          echo "--- feed symlinks ---"
+          ls -ld package/feeds/routing package/feeds/routing/bird3 2>/dev/null || true
+          echo "--- config before defconfig ---"
+          grep -E '^CONFIG_PACKAGE_(bird3|bird3c)=' .config || true
+
           make defconfig
 
           echo "=== Проверка обязательных пакетов после defconfig ==="
