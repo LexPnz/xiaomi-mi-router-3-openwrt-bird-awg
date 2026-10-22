@@ -60,13 +60,11 @@ jobs:
             "$GITHUB_WORKSPACE/patches/0001-mir3-customizations.patch"
           cp -a "$GITHUB_WORKSPACE/overlay/." openwrt/
 
-      - name: Cache OpenWrt build and toolchain
+      - name: Cache downloads and compiler cache
         uses: actions/cache@v4
         with:
           path: |
             openwrt/dl
-            openwrt/build_dir
-            openwrt/staging_dir
             openwrt/.ccache
           key: ${{ runner.os }}-mir3-${{ hashFiles('OPENWRT_COMMIT', 'config/.config', 'patches/**', 'overlay/**') }}
           restore-keys: |
@@ -215,6 +213,7 @@ jobs:
 
           if [ -f openwrt/.config ]; then
             cp openwrt/.config "$OUT/final.config"
+            sed -i '/WECHAT/Id' "$OUT/final.config"
             grep -E '^(CONFIG_PACKAGE_(bird3|bird3c|htop|iperf3|wireguard-tools|luci-proto-wireguard)=y|CONFIG_IPV6=y)' \
               openwrt/.config > "$OUT/key-options.txt" || true
           fi
