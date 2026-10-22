@@ -1,0 +1,19 @@
+#!/bin/sh
+
+[ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = "xiaomi,miwifi-r3" ] || exit 0
+
+uci -q get network.wg0 >/dev/null || uci set network.wg0='interface' || exit 1
+uci set network.wg0.proto='wireguard' || exit 1
+uci set network.wg0.auto='1' || exit 1
+uci -q delete network.wg0.addresses
+uci -q delete network.wg0.listen_port
+uci -q delete network.wg0.private_key
+
+uci -q delete firewall.wg.network
+uci add_list firewall.wg.network='wg0' || exit 1
+
+uci commit network || exit 1
+uci commit firewall || exit 1
+
+logger -t mir3-wg0 'Empty WireGuard interface configured'
+exit 0

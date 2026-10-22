@@ -1,0 +1,8 @@
+#!/bin/sh
+
+[ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = "xiaomi,miwifi-r3" ] || exit 0
+
+[ -x /etc/init.d/iperf3-server ] || exit 0
+/etc/init.d/iperf3-server enable
+
+exit 0

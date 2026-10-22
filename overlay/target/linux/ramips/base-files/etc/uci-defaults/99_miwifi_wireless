@@ -1,0 +1,57 @@
+#!/bin/sh
+
+[ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = "xiaomi,miwifi-r3" ] || exit 0
+
+radios="$(uci show wireless 2>/dev/null |
+    sed -n 's/^\(wireless\.[^=]*\)=wifi-device$/\1/p')"
+
+set -- $radios
+if [ "$#" -ne 2 ]; then
+    logger -t miwifi-wireless "Expected 2 radios, found $#; defaults not applied"
+    exit 1
+fi
+
+for radio in $radios; do
+    uci set "$radio.disabled=0" || exit 1
+    device="${radio#wireless.}"
+    case "$device" in
+        radio0) ssid="Mir3-5GHz" ;;
+        radio1) ssid="Mir3-2.4GHz" ;;
+        *)
+            logger -t miwifi-wireless "Unexpected radio device $device; defaults not applied"
+            exit 1
+            ;;
+    esac
+    found=0
+
+    ifaces="$(uci show wireless 2>/dev/null |
+        sed -n 's/^\(wireless\.[^=]*\)=wifi-iface$/\1/p')"
+
+    for iface in $ifaces; do
+        [ "$(uci -q get "$iface.device")" = "$device" ] || continue
+        [ "$found" -eq 0 ] || continue
+        found=1
+
+        uci set "$iface.mode=ap" || exit 1
+        uci set "$iface.network=lan" || exit 1
+        uci set "$iface.ssid=$ssid" || exit 1
+        uci set "$iface.encryption=psk2" || exit 1
+        uci set "$iface.key=0123456789" || exit 1
+        uci set "$iface.disabled=0" || exit 1
+    done
+
+    if [ "$found" -eq 0 ]; then
+        iface="$(uci add wireless wifi-iface)" || exit 1
+        uci set "wireless.$iface.device=$device" || exit 1
+        uci set "wireless.$iface.mode=ap" || exit 1
+        uci set "wireless.$iface.network=lan" || exit 1
+        uci set "wireless.$iface.ssid=$ssid" || exit 1
+        uci set "wireless.$iface.encryption=psk2" || exit 1
+        uci set "wireless.$iface.key=0123456789" || exit 1
+        uci set "wireless.$iface.disabled=0" || exit 1
+    fi
+done
+
+uci commit wireless || exit 1
+logger -t miwifi-wireless "Default Wi-Fi APs configured"
+exit 0

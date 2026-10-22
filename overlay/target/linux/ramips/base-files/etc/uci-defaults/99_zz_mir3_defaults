@@ -1,0 +1,24 @@
+#!/bin/sh
+
+[ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = "xiaomi,miwifi-r3" ] || exit 0
+
+uci -q delete network.lan.ipaddr
+uci add_list network.lan.ipaddr='172.16.1.1/24' || exit 1
+uci commit network || exit 1
+
+uci set dhcp.lan.start='128' || exit 1
+uci set dhcp.lan.limit='64' || exit 1
+uci commit dhcp || exit 1
+uci set dhcp.@dnsmasq[0].domain='mir3' || exit 1
+uci set dhcp.@dnsmasq[0].local='/mir3/' || exit 1
+uci set dhcp.@dnsmasq[0].expandhosts='1' || exit 1
+uci add_list dhcp.lan.dhcp_option='option:domain-search,mir3' || exit 1
+uci commit dhcp || exit 1
+
+uci set system.@system[0].hostname='MIR3' || exit 1
+uci commit system || exit 1
+
+(printf '%s\n' '0123456789'; sleep 1; printf '%s\n' '0123456789') | passwd root || exit 1
+
+logger -t mir3-defaults 'Hostname and root password configured'
+exit 0

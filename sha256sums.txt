@@ -1,0 +1,1 @@
+42be1ba57ac033fba61398339630db98c9e8f72f2c14bd282327f1ce16ce3bf3  bin/targets/ramips/mt7620/openwrt-xiaomi-mir3-ru-bird-wg-ipv4only-cpu600-ramips-mt7620-xiaomi_miwifi-r3-squashfs-sysupgrade.bin

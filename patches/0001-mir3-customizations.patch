@@ -1,0 +1,516 @@
+diff --git a/config/Config-build.in b/config/Config-build.in
+index b42fb8bc11..2f129e462a 100644
+--- a/config/Config-build.in
++++ b/config/Config-build.in
+@@ -188,7 +188,7 @@ menu "Global build settings"
+ 		  Packages can opt-out via setting PKG_BUILD_FLAGS:=no-mold
+ 
+ 	config IPV6
+-		def_bool y
++		def_bool n
+ 
+ 	comment "Stripping options"
+ 
+diff --git a/include/netfilter.mk b/include/netfilter.mk
+index 0b67354195..0b3787df56 100644
+--- a/include/netfilter.mk
++++ b/include/netfilter.mk
+@@ -305,7 +305,8 @@ $(eval $(if $(NF_KMOD),$(call nf_add,NFT_CORE,CONFIG_NFT_NUMGEN, $(P_XT)nft_numg
+ $(eval $(if $(NF_KMOD),$(call nf_add,NFT_CORE,CONFIG_NFT_OBJREF, $(P_XT)nft_objref),))
+ $(eval $(if $(NF_KMOD),$(call nf_add,NFT_CORE,CONFIG_NFT_QUOTA, $(P_XT)nft_quota),))
+ $(eval $(if $(NF_KMOD),$(call nf_add,NFT_CORE,CONFIG_NFT_REDIR, $(P_XT)nft_redir),))
+-$(eval $(if $(NF_KMOD),$(call nf_add,NFT_CORE,CONFIG_NFT_REJECT, $(P_XT)nft_reject $(P_V4)nft_reject_ipv4 $(P_V6)nft_reject_ipv6),))
++$(eval $(if $(NF_KMOD),$(call nf_add,NFT_CORE,CONFIG_NFT_REJECT, $(P_XT)nft_reject $(P_V4)nft_reject_ipv4),))
++$(eval $(if $(NF_KMOD),$(call nf_add,NFT_CORE,CONFIG_NFT_REJECT_IPV6, $(P_V6)nft_reject_ipv6),))
+ $(eval $(if $(NF_KMOD),$(call nf_add,NFT_CORE,CONFIG_NFT_REJECT_INET, $(P_XT)nft_reject_inet),))
+ 
+ $(eval $(if $(NF_KMOD),$(call nf_add,NFT_BRIDGE,CONFIG_NFT_BRIDGE_META, $(P_EBT)nft_meta_bridge),))
+diff --git a/include/version.mk b/include/version.mk
+index d1b1009a36..0e673931df 100644
+--- a/include/version.mk
++++ b/include/version.mk
+@@ -36,11 +36,11 @@ VERSION_REPO:=$(call qstrip,$(CONFIG_VERSION_REPO))
+ VERSION_REPO:=$(if $(VERSION_REPO),$(VERSION_REPO),https://downloads.openwrt.org/releases/25.12.6)
+ 
+ VERSION_DIST:=$(call qstrip,$(CONFIG_VERSION_DIST))
+-VERSION_DIST:=$(if $(VERSION_DIST),$(VERSION_DIST),OpenWrt)
++VERSION_DIST:=$(if $(VERSION_DIST),$(VERSION_DIST),OpenWRT-XIAOMI-MIR3-RU BIRD-WG IPv4only CPU600)
+ VERSION_DIST_SANITIZED:=$(call sanitize,$(VERSION_DIST))
+ 
+ VERSION_MANUFACTURER:=$(call qstrip,$(CONFIG_VERSION_MANUFACTURER))
+-VERSION_MANUFACTURER:=$(if $(VERSION_MANUFACTURER),$(VERSION_MANUFACTURER),OpenWrt)
++VERSION_MANUFACTURER:=$(if $(VERSION_MANUFACTURER),$(VERSION_MANUFACTURER),WRT-XIAOMI-MI-R3)
+ 
+ VERSION_MANUFACTURER_URL:=$(call qstrip,$(CONFIG_VERSION_MANUFACTURER_URL))
+ VERSION_MANUFACTURER_URL:=$(if $(VERSION_MANUFACTURER_URL),$(VERSION_MANUFACTURER_URL),https://openwrt.org/)
+diff --git a/package/base-files/files/etc/sysupgrade.conf b/package/base-files/files/etc/sysupgrade.conf
+index e06fd5e332..cbc7e9f42c 100644
+--- a/package/base-files/files/etc/sysupgrade.conf
++++ b/package/base-files/files/etc/sysupgrade.conf
+@@ -3,3 +3,4 @@
+ 
+ # /etc/example.conf
+ # /etc/openvpn/
++/root/
+diff --git a/package/boot/uboot-tools/uboot-envtools/files/ramips b/package/boot/uboot-tools/uboot-envtools/files/ramips
+index b4b1ad4a65..441d3bf8d7 100644
+--- a/package/boot/uboot-tools/uboot-envtools/files/ramips
++++ b/package/boot/uboot-tools/uboot-envtools/files/ramips
+@@ -133,6 +133,7 @@ snr,cpe-w4n-mt)
+ 	ubootenv_add_mtd "uboot-env" "0x0" "0x1000" "0x1000"
+ 	;;
+ xiaomi,mi-router-3-pro|\
++xiaomi,miwifi-r3|\
+ xiaomi,mi-router-3g|\
+ xiaomi,mi-router-4|\
+ xiaomi,mi-router-ac2100|\
+diff --git a/package/network/config/firewall/files/firewall.config b/package/network/config/firewall/files/firewall.config
+index a273059391..4c84e1082b 100644
+--- a/package/network/config/firewall/files/firewall.config
++++ b/package/network/config/firewall/files/firewall.config
+@@ -1,207 +1,82 @@
+ config defaults
+-	option synflood_protect	1
+-	option input		REJECT
+-	option output		ACCEPT
+-	option forward		REJECT
+-# Uncomment this line to disable ipv6 rules
+-#	option disable_ipv6	1
++        option synflood_protect '1'
++        option input 'REJECT'
++        option output 'ACCEPT'
++        option forward 'REJECT'
++        option flow_offloading '0'
++        option flow_offloading_hw '0'
+ 
+ config zone
+-	option name		lan
+-	list   network		'lan'
+-	option input		ACCEPT
+-	option output		ACCEPT
+-	option forward		ACCEPT
++        option name 'lan'
++        list network 'lan'
++        option input 'ACCEPT'
++        option output 'ACCEPT'
++        option forward 'ACCEPT'
+ 
+ config zone
+-	option name		wan
+-	list   network		'wan'
+-	list   network		'wan6'
+-	option input		REJECT
+-	option output		ACCEPT
+-	option forward		REJECT
+-	option masq		1
+-	option mtu_fix		1
++        option name 'wan'
++        list network 'wan'
++        option input 'REJECT'
++        option output 'ACCEPT'
++        option forward 'REJECT'
++        option masq '1'
++        option mtu_fix '1'
+ 
+ config forwarding
+-	option src		lan
+-	option dest		wan
++        option src 'lan'
++        option dest 'wan'
+ 
+-# We need to accept udp packets on port 68,
+-# see https://dev.openwrt.org/ticket/4108
+-config rule
+-	option name		Allow-DHCP-Renew
+-	option src		wan
+-	option proto		udp
+-	option dest_port	68
+-	option target		ACCEPT
+-	option family		ipv4
+-
+-# Allow IPv4 ping
+-config rule
+-	option name		Allow-Ping
+-	option src		wan
+-	option proto		icmp
+-	option icmp_type	echo-request
+-	option family		ipv4
+-	option target		ACCEPT
+-
+-config rule
+-	option name		Allow-IGMP
+-	option src		wan
+-	option proto		igmp
+-	option family		ipv4
+-	option target		ACCEPT
+-
+-# Allow DHCPv6 replies
+-# see https://github.com/openwrt/openwrt/issues/5066
+-config rule
+-	option name		Allow-DHCPv6
+-	option src		wan
+-	option proto		udp
+-	option dest_ip		fe80::/10
+-	option dest_port	546
+-	option family		ipv6
+-	option target		ACCEPT
++config forwarding
++        option src 'lan'
++        option dest 'wg'
+ 
+-config rule
+-	option name		Allow-MLD
+-	option src		wan
+-	option proto		icmp
+-	option src_ip		fe80::/10
+-	list icmp_type		'130/0'
+-	list icmp_type		'131/0'
+-	list icmp_type		'132/0'
+-	list icmp_type		'143/0'
+-	option family		ipv6
+-	option target		ACCEPT
++config zone 'wg'
++        option name 'wg'
++        list network 'wg0'
++        option input 'REJECT'
++        option output 'ACCEPT'
++        option forward 'REJECT'
++        option masq '1'
+ 
+-# Allow essential incoming IPv6 ICMP traffic
+ config rule
+-	option name		Allow-ICMPv6-Input
+-	option src		wan
+-	option proto	icmp
+-	list icmp_type		echo-request
+-	list icmp_type		echo-reply
+-	list icmp_type		destination-unreachable
+-	list icmp_type		packet-too-big
+-	list icmp_type		time-exceeded
+-	list icmp_type		bad-header
+-	list icmp_type		unknown-header-type
+-	list icmp_type		router-solicitation
+-	list icmp_type		neighbour-solicitation
+-	list icmp_type		router-advertisement
+-	list icmp_type		neighbour-advertisement
+-	option limit		1000/sec
+-	option family		ipv6
+-	option target		ACCEPT
++        option name 'Allow-DHCP-Renew'
++        option src 'wan'
++        option proto 'udp'
++        option dest_port '68'
++        option family 'ipv4'
++        option target 'ACCEPT'
+ 
+-# Allow essential forwarded IPv6 ICMP traffic
+ config rule
+-	option name		Allow-ICMPv6-Forward
+-	option src		wan
+-	option dest		*
+-	option proto		icmp
+-	list icmp_type		echo-request
+-	list icmp_type		echo-reply
+-	list icmp_type		destination-unreachable
+-	list icmp_type		packet-too-big
+-	list icmp_type		time-exceeded
+-	list icmp_type		bad-header
+-	list icmp_type		unknown-header-type
+-	option limit		1000/sec
+-	option family		ipv6
+-	option target		ACCEPT
++        option name 'Allow-Ping'
++        option src 'wan'
++        option proto 'icmp'
++        option icmp_type 'echo-request'
++        option family 'ipv4'
++        option target 'ACCEPT'
+ 
+ config rule
+-	option name		Allow-IPSec-ESP
+-	option src		wan
+-	option dest		lan
+-	option proto		esp
+-	option target		ACCEPT
++        option name 'MIR3-Allow-SSH-LAN'
++        option src 'lan'
++        option proto 'tcp'
++        option dest_port '22'
++        option family 'ipv4'
++        option target 'ACCEPT'
+ 
+ config rule
+-	option name		Allow-ISAKMP
+-	option src		wan
+-	option dest		lan
+-	option dest_port	500
+-	option proto		udp
+-	option target		ACCEPT
++        option name 'MIR3-Allow-SSH-WAN'
++        option src 'wan'
++        option proto 'tcp'
++        option dest_port '22'
++        option family 'ipv4'
++        option target 'ACCEPT'
+ 
+-# allow interoperability with traceroute classic
+-# note that traceroute uses a fixed port range, and depends on getting
+-# back ICMP Unreachables.  if we're operating in DROP mode, it won't
+-# work so we explicitly REJECT packets on these ports.
+ config rule
+-	option name		Support-UDP-Traceroute
+-	option src		wan
+-	option dest_port	33434:33689
+-	option proto		udp
+-	option family		ipv4
+-	option target		REJECT
+-	option enabled		0
++        option name 'MIR3-Allow-SSH-WG'
++        option src 'wg'
++        option proto 'tcp'
++        option dest_port '22'
++        option family 'ipv4'
++        option target 'ACCEPT'
+ 
+-# include a file with users custom iptables rules
+ config include
+-	option path /etc/firewall.user
+-
+-
+-### EXAMPLE CONFIG SECTIONS
+-# do not allow a specific ip to access wan
+-#config rule
+-#	option src		lan
+-#	option src_ip	192.168.45.2
+-#	option dest		wan
+-#	option proto	tcp
+-#	option target	REJECT
+-
+-# block a specific mac on wan
+-#config rule
+-#	option dest		wan
+-#	option src_mac	00:11:22:33:44:66
+-#	option target	REJECT
+-
+-# block incoming ICMP traffic on a zone
+-#config rule
+-#	option src		lan
+-#	option proto	ICMP
+-#	option target	DROP
+-
+-# port redirect port coming in on wan to lan
+-#config redirect
+-#	option src			wan
+-#	option src_dport	80
+-#	option dest			lan
+-#	option dest_ip		192.168.16.235
+-#	option dest_port	80
+-#	option proto		tcp
+-
+-# port redirect of remapped ssh port (22001) on wan
+-#config redirect
+-#	option src		wan
+-#	option src_dport	22001
+-#	option dest		lan
+-#	option dest_port	22
+-#	option proto		tcp
+-
+-### FULL CONFIG SECTIONS
+-#config rule
+-#	option src		lan
+-#	option src_ip	192.168.45.2
+-#	option src_mac	00:11:22:33:44:55
+-#	option src_port	80
+-#	option dest		wan
+-#	option dest_ip	194.25.2.129
+-#	option dest_port	120
+-#	option proto	tcp
+-#	option target	REJECT
+-
+-#config redirect
+-#	option src		lan
+-#	option src_ip	192.168.45.2
+-#	option src_mac	00:11:22:33:44:55
+-#	option src_port		1024
+-#	option src_dport	80
+-#	option dest_ip	194.25.2.129
+-#	option dest_port	120
+-#	option proto	tcp
++        option path '/etc/firewall.user'
+diff --git a/target/linux/ramips/image/mt7620.mk b/target/linux/ramips/image/mt7620.mk
+index d5c5ef4140..8d441684f2 100644
+--- a/target/linux/ramips/image/mt7620.mk
++++ b/target/linux/ramips/image/mt7620.mk
+@@ -1440,12 +1440,30 @@ define Device/xiaomi_miwifi-mini
+   SOC := mt7620a
+   IMAGE_SIZE := 15872k
+   DEVICE_VENDOR := Xiaomi
+-  DEVICE_MODEL := MiWiFi Mini
++  DEVICE_MODEL := Mi Router 3
+   DEVICE_PACKAGES := kmod-mt76x2 kmod-usb2 kmod-usb-ohci
+   SUPPORTED_DEVICES += miwifi-mini
+ endef
+ TARGET_DEVICES += xiaomi_miwifi-mini
+ 
++define Device/xiaomi_miwifi-r3
++  SOC := mt7620a
++  BLOCKSIZE := 128k
++  PAGESIZE := 2048
++  KERNEL_SIZE := 4096k
++  IMAGE_SIZE := 32768k
++  UBINIZE_OPTS := -E 5
++  IMAGES += kernel1.bin rootfs0.bin
++  IMAGE/kernel1.bin := append-kernel | check-size $$$$(KERNEL_SIZE)
++  IMAGE/rootfs0.bin := append-ubi | check-size
++  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
++  DEVICE_VENDOR := Xiaomi
++  DEVICE_MODEL := Mi Router R3
++  DEVICE_PACKAGES := kmod-mt76x2 kmod-usb2 kmod-usb-ohci uboot-envtools
++  SUPPORTED_DEVICES += miwifi-r3
++endef
++TARGET_DEVICES += xiaomi_miwifi-r3
++
+ define Device/youku_x2
+   SOC := mt7620a
+   IMAGE_SIZE := 16064k
+diff --git a/target/linux/ramips/mt7620/base-files/etc/board.d/02_network b/target/linux/ramips/mt7620/base-files/etc/board.d/02_network
+index 208cb647d3..78c3b39422 100644
+--- a/target/linux/ramips/mt7620/base-files/etc/board.d/02_network
++++ b/target/linux/ramips/mt7620/base-files/etc/board.d/02_network
+@@ -281,6 +281,10 @@ ramips_setup_interfaces()
+ 		ucidef_add_switch "switch0" \
+ 			"0:lan" "1:lan" "4:wan" "6@eth0"
+ 		;;
++	xiaomi,miwifi-r3)
++		ucidef_add_switch "switch0" \
++			"1:lan" "4:lan" "0:wan" "6@eth0"
++		;;
+ 	zbtlink,zbt-we1026-5g-16m)
+ 		ucidef_add_switch "switch0" \
+ 			"0:lan" "6t@eth0"
+@@ -444,6 +448,10 @@ ramips_setup_macs()
+ 		wan_mac=$(mtd_get_mac_binary factory 0x2e)
+ 		label_mac=$(mtd_get_mac_binary factory 0x8004)
+ 		;;
++	xiaomi,miwifi-r3)
++		wan_mac=$(mtd_get_mac_binary factory 0x28)
++		lan_mac=$(macaddr_setbit_la "$wan_mac")
++		;;
+ 	zyxel,keenetic-lite-iii-a)
+ 		lan_mac=$(mtd_get_mac_binary RF-EEPROM 0x4)
+ 		wan_mac=$(mtd_get_mac_binary RF-EEPROM 0x28)
+diff --git a/target/linux/ramips/mt7620/base-files/lib/upgrade/platform.sh b/target/linux/ramips/mt7620/base-files/lib/upgrade/platform.sh
+index 6dd7fc7cef..6eddafc70c 100755
+--- a/target/linux/ramips/mt7620/base-files/lib/upgrade/platform.sh
++++ b/target/linux/ramips/mt7620/base-files/lib/upgrade/platform.sh
+@@ -38,6 +38,10 @@ platform_do_upgrade() {
+ 				of=/dev/mtdblock$idx
+ 		default_do_upgrade "$1"
+ 		;;
++	xiaomi,miwifi-r3)
++		unset CI_KERNPART_EXT
++		nand_do_upgrade "$1"
++		;;
+ 	*)
+ 		default_do_upgrade "$1"
+ 		;;
+diff --git a/target/linux/ramips/mt7620/config-6.12 b/target/linux/ramips/mt7620/config-6.12
+index 62e49bc870..9da860cff2 100644
+--- a/target/linux/ramips/mt7620/config-6.12
++++ b/target/linux/ramips/mt7620/config-6.12
+@@ -33,12 +33,17 @@ CONFIG_CPU_R4K_CACHE_TLB=y
+ CONFIG_CPU_SUPPORTS_32BIT_KERNEL=y
+ CONFIG_CPU_SUPPORTS_HIGHMEM=y
+ CONFIG_CPU_SUPPORTS_MSA=y
++CONFIG_CRC16=y
++CONFIG_CRYPTO_ACOMP2=y
++CONFIG_CRYPTO_DEFLATE=y
++CONFIG_CRYPTO_HASH_INFO=y
+ CONFIG_CRYPTO_ECB=y
+ CONFIG_CRYPTO_LIB_BLAKE2S_GENERIC=y
+ CONFIG_CRYPTO_LIB_GF128MUL=y
+ CONFIG_CRYPTO_LIB_POLY1305_RSIZE=2
+ CONFIG_CRYPTO_LIB_SHA1=y
+ CONFIG_CRYPTO_LIB_UTILS=y
++CONFIG_CRYPTO_LZO=y
+ CONFIG_CSRC_R4K=y
+ CONFIG_DEBUG_INFO=y
+ CONFIG_DEBUG_PINCTRL=y
+@@ -104,6 +109,8 @@ CONFIG_IRQ_WORK=y
+ CONFIG_LIBFDT=y
+ # CONFIG_LIST_HARDENED is not set
+ CONFIG_LOCK_DEBUGGING_SUPPORT=y
++CONFIG_LZO_COMPRESS=y
++CONFIG_LZO_DECOMPRESS=y
+ CONFIG_MARVELL_PHY=y
+ CONFIG_MDIO_BUS=y
+ CONFIG_MDIO_DEVICE=y
+@@ -126,6 +133,7 @@ CONFIG_MODULES_USE_ELF_REL=y
+ # CONFIG_MT7621_WDT is not set
+ # CONFIG_MTD_CFI_INTELEXT is not set
+ CONFIG_MTD_CMDLINE_PARTS=y
++CONFIG_MTD_NAND_MT7620=y
+ # CONFIG_MTD_PARSER_TPLINK_SAFELOADER is not set
+ CONFIG_MTD_PHYSMAP=y
+ CONFIG_MTD_SPI_NOR=y
+@@ -134,6 +142,10 @@ CONFIG_MTD_SPLIT_JIMAGE_FW=y
+ CONFIG_MTD_SPLIT_SEAMA_FW=y
+ CONFIG_MTD_SPLIT_TPLINK_FW=y
+ CONFIG_MTD_SPLIT_UIMAGE_FW=y
++CONFIG_MTD_UBI=y
++CONFIG_MTD_UBI_BEB_LIMIT=20
++CONFIG_MTD_UBI_BLOCK=y
++CONFIG_MTD_UBI_WL_THRESHOLD=4096
+ CONFIG_MTD_VIRT_CONCAT=y
+ CONFIG_NEED_DMA_MAP_STATE=y
+ CONFIG_NEED_PER_CPU_KM=y
+@@ -194,6 +206,7 @@ CONFIG_SERIAL_8250_RT288X=y
+ CONFIG_SERIAL_MCTRL_GPIO=y
+ CONFIG_SERIAL_OF_PLATFORM=y
+ CONFIG_SOC_BUS=y
++CONFIG_SGL_ALLOC=y
+ CONFIG_SOC_MT7620=y
+ # CONFIG_SOC_MT7621 is not set
+ # CONFIG_SOC_RT288X is not set
+@@ -223,7 +236,15 @@ CONFIG_TICK_CPU_ACCOUNTING=y
+ CONFIG_TIMER_OF=y
+ CONFIG_TIMER_PROBE=y
+ CONFIG_TINY_SRCU=y
++CONFIG_UBIFS_ATIME_SUPPORT=y
++CONFIG_UBIFS_FS=y
++CONFIG_UBIFS_FS_ADVANCED_COMPR=y
++CONFIG_UBIFS_FS_LZO=y
++CONFIG_UBIFS_FS_ZLIB=y
+ CONFIG_USB_SUPPORT=y
+ CONFIG_USE_OF=y
+ CONFIG_WATCHDOG_CORE=y
++CONFIG_ZLIB_DEFLATE=y
++CONFIG_ZLIB_INFLATE=y
+ CONFIG_ZBOOT_LOAD_ADDRESS=0x0
++# CONFIG_IPV6 is not set
+diff --git a/target/linux/ramips/mt7620/target.mk b/target/linux/ramips/mt7620/target.mk
+index 34488f95af..1d1d281a0f 100644
+--- a/target/linux/ramips/mt7620/target.mk
++++ b/target/linux/ramips/mt7620/target.mk
+@@ -4,7 +4,7 @@
+ 
+ SUBTARGET:=mt7620
+ BOARDNAME:=MT7620 based boards
+-FEATURES+=usb ramdisk
++FEATURES+=usb nand ramdisk
+ CPU_TYPE:=24kc
+ 
+ DEFAULT_PACKAGES += kmod-rt2800-soc wpad-basic-mbedtls swconfig
+diff --git a/target/linux/ramips/patches-6.12/312-MIPS-ralink-add-cpu-frequency-scaling.patch b/target/linux/ramips/patches-6.12/312-MIPS-ralink-add-cpu-frequency-scaling.patch
+index 6acdfff837..19dee990a9 100644
+--- a/target/linux/ramips/patches-6.12/312-MIPS-ralink-add-cpu-frequency-scaling.patch
++++ b/target/linux/ramips/patches-6.12/312-MIPS-ralink-add-cpu-frequency-scaling.patch
+@@ -144,7 +144,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
+  }
+  
+ +static const struct of_device_id systick_match[] = {
+-+	{ .compatible = "ralink,mt7620a-systick", .data = mt7620_freq_scaling},
+++	{ .compatible = "ralink,mt7620a-systick", .data = NULL},
+ +	{},
+ +};
+ +

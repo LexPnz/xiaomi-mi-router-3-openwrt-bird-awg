@@ -1,0 +1,100 @@
+--- a/drivers/clk/ralink/clk-mtmips.c
++++ b/drivers/clk/ralink/clk-mtmips.c
+@@ -5,6 +5,7 @@
+  */
+ 
+ #include <linux/bitops.h>
++#include <linux/delay.h>
+ #include <linux/clk-provider.h>
+ #include <linux/mfd/syscon.h>
+ #include <linux/platform_device.h>
+@@ -892,6 +893,69 @@
+ 	regmap_write(priv->sysc, SYSC_REG_CPU_SYS_CLKCFG, t);
+ }
+ 
++
++static void __init mt7620_pll_set_600(struct regmap *sysc)
++{
++        u32 pll0, pll1, verify, value;
++        u32 mult_mask = CPLL_CFG0_PLL_MULT_RATIO_MASK <<
++                        CPLL_CFG0_PLL_MULT_RATIO_SHIFT;
++        u32 div_mask = CPLL_CFG0_PLL_DIV_RATIO_MASK <<
++                       CPLL_CFG0_PLL_DIV_RATIO_SHIFT;
++        int ret;
++
++        ret = regmap_read(sysc, SYSC_REG_CPLL_CONFIG0, &pll0);
++        if (ret) {
++                pr_err("MT7620 PLL600: CPLL_CONFIG0 read failed: %d\n", ret);
++                return;
++        }
++
++        if (!(pll0 & CPLL_CFG0_SW_CFG) ||
++            (pll0 & CPLL_CFG0_BYPASS_REF_CLK) ||
++            !(pll0 & CPLL_CFG0_LC_CURFCK)) {
++                pr_err("MT7620 PLL600: unsupported PLL mode, unchanged\n");
++                return;
++        }
++
++        ret = regmap_read(sysc, SYSC_REG_CPLL_CONFIG1, &pll1);
++        if (ret) {
++                pr_err("MT7620 PLL600: CPLL_CONFIG1 read failed: %d\n", ret);
++                return;
++        }
++
++        if (pll1 & (CPLL_CFG1_CPU_AUX1 | CPLL_CFG1_CPU_AUX0)) {
++                pr_err("MT7620 PLL600: auxiliary clock selected, unchanged\n");
++                return;
++        }
++
++        value = pll0 & ~(BIT(7) | mult_mask | div_mask);
++        value |= 6 << CPLL_CFG0_PLL_MULT_RATIO_SHIFT;
++
++        if (value != pll0) {
++                ret = regmap_write(sysc, SYSC_REG_CPLL_CONFIG0, value);
++                if (ret) {
++                        pr_err("MT7620 PLL600: register write failed: %d\n",
++                               ret);
++                        return;
++                }
++                udelay(10);
++        }
++
++        ret = regmap_read(sysc, SYSC_REG_CPLL_CONFIG0, &verify);
++        if (ret) {
++                pr_err("MT7620 PLL600: readback failed: %d\n", ret);
++                return;
++        }
++
++        if ((verify & (BIT(7) | mult_mask | div_mask)) !=
++            (6 << CPLL_CFG0_PLL_MULT_RATIO_SHIFT)) {
++                pr_err("MT7620 PLL600: readback mismatch: 0x%08x\n",
++                       verify);
++                return;
++        }
++
++        pr_info("MT7620 PLL600: CPLL_CONFIG0=0x%08x\n", verify);
++}
++
+ static void __init mtmips_clk_init(struct device_node *node)
+ {
+ 	const struct of_device_id *match;
+@@ -910,6 +974,19 @@
+ 		goto free_clk_priv;
+ 	}
+ 
++	if (of_device_is_compatible(node, "ralink,mt7620-sysc")) {
++		u32 pll0 = 0, pll1 = 0, cpu_cfg = 0;
++
++                mt7620_pll_set_600(priv->sysc);
++
++		regmap_read(priv->sysc, SYSC_REG_CPLL_CONFIG0, &pll0);
++		regmap_read(priv->sysc, SYSC_REG_CPLL_CONFIG1, &pll1);
++		regmap_read(priv->sysc, SYSC_REG_CPU_SYS_CLKCFG,
++			    &cpu_cfg);
++		pr_info("MT7620 PLL diagnostic: CPLL_CONFIG0=0x%08x CPLL_CONFIG1=0x%08x CPU_SYS_CLKCFG=0x%08x\n",
++			pll0, pll1, cpu_cfg);
++	}
++
+ 	mtmips_clk_regs_init(node, priv);
+ 
+ 	match = of_match_node(mtmips_of_match, node);
