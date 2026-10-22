@@ -68,8 +68,60 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           make defconfig
+
+          echo "=== Проверка обязательных пакетов после defconfig ==="
+          grep -E '^(CONFIG_PACKAGE_(bird3|wireguard-tools|luci-proto-wireguard)=y)$' .config || true
+
+          for option in \
+            CONFIG_PACKAGE_bird3 \
+            CONFIG_PACKAGE_wireguard-tools \
+            CONFIG_PACKAGE_luci-proto-wireguard; do
+            if ! grep -qx "${option}=y" .config; then
+              echo "::error::Required option missing after defconfig: ${option}=y"
+              exit 1
+            fi
+          done
+
+          if grep -qx 'CONFIG_IPV6=y' .config; then
+            echo "::error::IPv6 is enabled, but this build must be IPv4-only"
+            exit 1
+          fi
+
+          echo "=== Конфигурация проверена ==="
           make download -j4
           make -j2 V=s
+
+      - name: Collect build diagnostics
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          OUT="$GITHUB_WORKSPACE/release-files/diagnostics"
+          mkdir -p "$OUT"
+
+          if [ -f openwrt/.config ]; then
+            cp openwrt/.config "$OUT/final.config"
+            grep -E '^(CONFIG_PACKAGE_(bird3|wireguard-tools|luci-proto-wireguard)=y|CONFIG_IPV6=y)' \
+              openwrt/.config > "$OUT/key-options.txt" || true
+          fi
+
+          if [ -f openwrt/bin/targets/ramips/mt7620/manifest ]; then
+            cp openwrt/bin/targets/ramips/mt7620/manifest "$OUT/manifest"
+          fi
+
+          if [ -d openwrt/bin/targets/ramips/mt7620 ]; then
+            find openwrt/bin/targets/ramips/mt7620 -maxdepth 1 -type f \
+              -printf '%f %s bytes\\n' > "$OUT/target-files.txt"
+          fi
+
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xiaomi-mi-router-3-build-diagnostics
+          path: release-files/diagnostics/*
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Collect firmware and checksum
         shell: bash
