@@ -60,13 +60,25 @@ jobs:
             "$GITHUB_WORKSPACE/patches/0001-mir3-customizations.patch"
           cp -a "$GITHUB_WORKSPACE/overlay/." openwrt/
 
+      - name: Cache OpenWrt build and toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            openwrt/dl
+            openwrt/build_dir
+            openwrt/staging_dir
+            openwrt/.ccache
+          key: ${{ runner.os }}-mir3-${{ hashFiles('OPENWRT_COMMIT', 'config/.config', 'patches/**', 'overlay/**') }}
+          restore-keys: |
+            ${{ runner.os }}-mir3-
+
       - name: Configure feeds and build
         working-directory: openwrt
         run: |
           set -eux
           cp "$GITHUB_WORKSPACE/config/.config" .config
           ./scripts/feeds update -a
-          ./scripts/feeds install -a
+          ./scripts/feeds install bird3 bird3c htop iperf3 luci-proto-wireguard wireguard-tools
           make defconfig
 
           echo "=== Проверка обязательных пакетов после defconfig ==="
@@ -91,8 +103,8 @@ jobs:
           fi
 
           echo "=== Конфигурация проверена ==="
-          make download -j4
-          make -j2 V=s
+          make download -j"$(nproc)"
+          make -j"$(nproc)" V=s
 
       - name: Verify required packages in firmware
         working-directory: openwrt
