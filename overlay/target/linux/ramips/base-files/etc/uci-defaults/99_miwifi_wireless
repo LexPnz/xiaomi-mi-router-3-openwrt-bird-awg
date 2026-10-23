@@ -13,6 +13,17 @@ fi
 
 for radio in $radios; do
     uci set "$radio.disabled=0" || exit 1
+    uci set "$radio.country=PA" || exit 1
+
+    case "$radio" in
+        wireless.radio0)
+            uci set "$radio.txpower=21" || exit 1
+            ;;
+        wireless.radio1)
+            uci set "$radio.txpower=36" || exit 1
+            ;;
+    esac
+
     device="${radio#wireless.}"
     case "$device" in
         radio0) ssid="Mir3-5GHz" ;;

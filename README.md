@@ -17,6 +17,7 @@ The build includes BIRD for BGP routing, WireGuard support, diagnostic tools, an
 - `htop` for process and resource monitoring
 - `mtr`, `traceroute`, and DNS diagnostic utilities
 - IPv6 disabled; IPv4-only configuration
+- Software flow offloading enabled in the firewall
 - Custom default network and wireless settings
 - GitHub Actions workflow for automated firmware builds
 
@@ -31,7 +32,7 @@ The build includes BIRD for BGP routing, WireGuard support, diagnostic tools, an
 | htop | Process and resource monitoring |
 | mtr | Network path diagnostics |
 | traceroute | Route tracing |
-| DNS diagnostic tools | DNS troubleshooting |
+| host, dig | DNS troubleshooting |
 
 ## Default configuration
 
@@ -41,12 +42,13 @@ The build includes BIRD for BGP routing, WireGuard support, diagnostic tools, an
 - LAN address: `172.16.1.1/24`
 - LAN DHCP pool: `172.16.1.128`–`172.16.1.191`
 - Local DNS domain: `mir3`
-- WAN interface: configured according to the device's default OpenWrt network setup
+- WAN interface: obtains its IP address and network settings via DHCP from the ISP.
 
 ### Wireless
 
-- Default SSID: `Xiaomi-MiWiFi`
+- Default SSID: `Mir3-2.4GHz/Mir3-5GHz`
 - Default Wi-Fi password: `0123456789`
+- To increase the permitted transmit power, the country code `PA` is used, with transmit power set to `21` for `radio0` (5 GHz) and `36` for `radio1` (2.4 GHz).
 
 ### Access
 

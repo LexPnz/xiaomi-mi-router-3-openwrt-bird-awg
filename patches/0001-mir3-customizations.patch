@@ -80,7 +80,7 @@ index a273059391..4c84e1082b 100644
 +        option input 'REJECT'
 +        option output 'ACCEPT'
 +        option forward 'REJECT'
-+        option flow_offloading '0'
++        option flow_offloading '1'
 +        option flow_offloading_hw '0'
  
  config zone
