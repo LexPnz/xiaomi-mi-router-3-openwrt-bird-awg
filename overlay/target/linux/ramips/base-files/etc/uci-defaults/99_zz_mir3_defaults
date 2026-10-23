@@ -1,6 +1,13 @@
 #!/bin/sh
 
+
+
 [ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = "xiaomi,miwifi-r3" ] || exit 0
+
+# Бесконечная сессия LuCI (нулевой тайм-аут).
+# Infinite LuCI session (zero timeout).
+uci set luci.sauth.sessiontime='0'
+uci commit luci
 
 uci -q delete network.lan.ipaddr
 uci add_list network.lan.ipaddr='172.16.1.1/24' || exit 1
