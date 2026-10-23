@@ -1,3 +1,4 @@
+[English](README.md) | [Русский](README.ru.md)
 # Xiaomi Mi Router 3 — Custom OpenWrt with BIRD, WireGuard and 600 MHz CPU
 
 Custom OpenWrt firmware for the **Xiaomi Mi Router 3 (MiWiFi R3)**, based on **OpenWrt 25.12.6**.
