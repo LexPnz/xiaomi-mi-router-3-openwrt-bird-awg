@@ -1,115 +1,135 @@
-# Xiaomi Mi Router 3 — OpenWrt BIRD + WireGuard
+# Xiaomi Mi Router 3 — Custom OpenWrt with BIRD, WireGuard and 600 MHz CPU
 
-Custom OpenWrt build for **Xiaomi Mi Router 3 (R3)**,
-based on OpenWrt 25.12.6.
+Custom OpenWrt firmware for the **Xiaomi Mi Router 3 (MiWiFi R3)**, based on **OpenWrt 25.12.6**.
 
-## Build information
+The build includes BIRD for BGP routing, WireGuard support, diagnostic tools, and a CPU frequency configuration targeting 600 MHz.
 
-- Device: Xiaomi Mi Router 3 (R3)
-- Board: `xiaomi,miwifi-r3`
-- Target: `ramips/mt7620`
-- Architecture: `mipsel_24kc`
-- OpenWrt version: 25.12.6
-- Base source revision: see [`OPENWRT_COMMIT`](OPENWRT_COMMIT)
-- CPU frequency: 600 MHz
-- IPv6: disabled in this build configuration
-- Routing: BIRD 3
-- VPN: WireGuard tools and kernel support
-- Web interface: LuCI with WireGuard protocol support
+## Features
+
+- **OpenWrt 25.12.6**
+- **MediaTek MT7620A** platform
+- CPU frequency configured for **600 MHz**
+- **BIRD 3** for BGP routing
+- **WireGuard** support
+- LuCI web interface
+- `iperf3` for network throughput testing
+- `htop` for process and resource monitoring
+- `mtr`, `traceroute`, and DNS diagnostic utilities
+- IPv6 disabled; IPv4-only configuration
+- Custom default network and wireless settings
+- GitHub Actions workflow for automated firmware builds
 
 ## Included components
 
-The build configuration selects BIRD 3, WireGuard, LuCI WireGuard
-protocol support, iperf3, htop, mtr, traceroute, and DNS diagnostic
-utilities. The exact package selection is in [`config/.config`](config/.config).
+| Component | Purpose |
+|---|---|
+| BIRD 3 | BGP routing |
+| WireGuard | VPN tunnel support |
+| LuCI | Web administration interface |
+| iperf3 | Network throughput testing |
+| htop | Process and resource monitoring |
+| mtr | Network path diagnostics |
+| traceroute | Route tracing |
+| DNS diagnostic tools | DNS troubleshooting |
 
-BIRD is included with a template configuration. It is not preconfigured
-with a local AS number or BGP peers.
+## Default configuration
 
-WireGuard support and a `wg0` interface setup are included, but a usable
-tunnel requires the user's own peer configuration and keys.
+### Network
 
-## Default settings and security warning
+- Router hostname: `MIR3`
+- LAN address: `172.16.1.1/24`
+- LAN DHCP pool: `172.16.1.128`–`172.16.1.191`
+- Local DNS domain: `mir3`
+- WAN interface: configured according to the device's default OpenWrt network setup
 
-**Do not expose this firmware to an untrusted network without reviewing
-its security settings.**
+### Wireless
 
-The current build sets the following defaults:
+- Default SSID: `Xiaomi-MiWiFi`
+- Default Wi-Fi password: `0123456789`
 
-- Root password: `0123456789`
-- Wi-Fi password: `0123456789`
+### Access
+
+- Default root password: `0123456789`
+- SSH port: `22`
 - SSH access is allowed from LAN, WAN, and the WireGuard firewall zone.
 
-These are intentionally documented to match the published build, but
-they are not secure deployment settings. Change the root password and
-Wi-Fi password immediately after installation. Restrict SSH from WAN
-unless remote access is specifically required, and review firewall rules
-before connecting the router to the Internet.
+**Security note:** These are default credentials intended for this custom build. Consider the security implications before exposing the router to untrusted networks.
 
-The default WireGuard setup does not provide a working tunnel by itself.
-Do not publish private keys, preshared keys, or personal peer credentials.
+## BIRD and BGP
 
-## Repository layout
+BIRD is included with a template configuration. It is not preconfigured with a local AS number or BGP peers.
 
-- `OPENWRT_COMMIT` — exact base OpenWrt Git revision
-- `config/.config` — build configuration
-- `patches/0001-mir3-customizations.patch` — modifications to tracked
-  OpenWrt source files
-- `overlay/` — additional source files to copy into the OpenWrt tree
-- `sha256sums.txt` — firmware checksum information
+Configure the local AS number, router ID, peer addresses, remote AS numbers, and routing policies for your own network before relying on BGP routes.
 
-## Reproducing the build
+## WireGuard
 
-Use a Linux build environment supported by OpenWrt. Building OpenWrt
-requires the standard host build dependencies documented by the OpenWrt
-project.
+WireGuard tools and LuCI protocol support are included.
 
-1. Obtain the OpenWrt source tree.
-2. Check out the exact revision recorded in `OPENWRT_COMMIT`.
-3. Apply `patches/0001-mir3-customizations.patch`.
-4. Copy the contents of `overlay/` into the root of the OpenWrt source tree.
-5. Copy `config/.config` to the source tree as `.config`.
-6. Run `make defconfig`, download the required sources, and build the image.
+The build initializes the `wg0` interface, but a working tunnel requires your own WireGuard private key, peer public key, endpoint, allowed IP ranges, and any required routing and firewall settings.
 
-Example commands, starting in the directory where the source tree should
-be created:
+Do not publish private keys or other secrets in the repository.
 
-```sh
-git clone https://git.openwrt.org/openwrt/openwrt.git openwrt
-cd openwrt
-git checkout "$(cat ../xiaomi-mi-router-3-openwrt-bird-wg/OPENWRT_COMMIT)"
-git apply ../xiaomi-mi-router-3-openwrt-bird-wg/patches/0001-mir3-customizations.patch
-cp -a ../xiaomi-mi-router-3-openwrt-bird-wg/overlay/. .
-cp ../xiaomi-mi-router-3-openwrt-bird-wg/config/.config .config
-make defconfig
-make download
-make -j"$(nproc)"
+## Repository structure
+
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── build.yml
+├── config/
+│   └── .config
+├── overlay/
+│   ├── files/
+│   └── target/
+├── patches/
+│   └── 0001-mir3-customizations.patch
+├── OPENWRT_COMMIT
+├── README.md
+└── sha256sums.txt
 ```
 
-The example assumes the repository is located next to the new `openwrt`
-directory. Adjust the paths if your directories differ.
+- `config/.config` — OpenWrt build configuration.
+- `patches/` — patches applied to the OpenWrt source tree.
+- `overlay/` — custom files copied into the OpenWrt source tree during the build.
+- `OPENWRT_COMMIT` — the exact OpenWrt source revision used by the build.
+- `.github/workflows/build.yml` — GitHub Actions workflow for building the firmware.
+- `sha256sums.txt` — checksum file, when generated or maintained for the published firmware artifacts.
 
-A clean-tree build has not yet been independently verified. Confirm that
-the patch applies and that the resulting image matches the intended
-device before distributing it.
+## Building the firmware
 
-## Installation
+The repository uses GitHub Actions to automate the build.
 
-Use the sysupgrade image only on the intended Xiaomi Mi Router 3 (R3)
-device and verify the image checksum before flashing.
+1. Push the repository to GitHub.
+2. Open the repository on GitHub.
+3. Select the **Actions** tab.
+4. Open the firmware build workflow.
+5. Start the workflow manually if `workflow_dispatch` is enabled, or push a change to a path monitored by the workflow.
+6. Wait for the workflow to finish.
+7. Open the completed workflow run and download the firmware artifacts, if the workflow publishes them.
 
-A firmware upgrade can render a device unusable if the wrong image is
-selected or the flash process is interrupted. Keep a recovery method
-available and back up any configuration you need.
+The workflow checks out the pinned OpenWrt revision, applies the project's patch and overlay, installs package feeds, loads the build configuration, and compiles the firmware.
 
-## Firmware download
+For local builds, follow the same sequence used in `.github/workflows/build.yml`. Do not assume that a generic OpenWrt build procedure applies to this repository without its project-specific patch and overlay steps.
 
-Prebuilt firmware images should be published under GitHub Releases,
-rather than committed to the source repository. Each release should
-identify the exact image filename and provide its SHA-256 checksum.
+## Installing the firmware
+
+Before flashing, verify that the image is intended for the **Xiaomi Mi Router 3 (MiWiFi R3)** and follow the installation method supported by your current firmware and recovery setup.
+
+- Keep a copy of the current configuration if you need it.
+- Verify the downloaded image and its checksum when a checksum is provided.
+- Do not interrupt power during flashing.
+- Have a recovery procedure available before upgrading.
+
+Flashing the wrong image or interrupting the process can make the router unbootable.
+
+## Firmware artifacts and checksums
+
+When a build workflow publishes firmware files, download them from the corresponding GitHub Actions run or release.
+
+If `sha256sums.txt` is provided, verify the downloaded firmware against it before flashing.
 
 ## Disclaimer
 
-This is a community custom build, not an official Xiaomi firmware.
-Use it at your own risk. Review the upstream OpenWrt licensing and notices
-for the source code and included components.
+This project is provided **as is**, without any warranty. You are responsible for verifying the firmware image, understanding the configuration, and ensuring that it is suitable for your device and network.
+
+Use at your own risk.
