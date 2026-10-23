@@ -2,6 +2,7 @@ name: Build Xiaomi Mi Router 3 firmware
 
 on:
   workflow_dispatch:
+  workflow_call:
   push:
     branches:
       - main
