@@ -1,0 +1,4 @@
+config client 'client'
+	option upgrade_packages '0'
+	option auto_search '0'
+	option login_check_for_upgrades '0'
