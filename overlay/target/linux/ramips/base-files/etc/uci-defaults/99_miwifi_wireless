@@ -15,24 +15,24 @@ for radio in $radios; do
     uci set "$radio.disabled=0" || exit 1
     uci set "$radio.country=PA" || exit 1
 
-    case "$radio" in
-        wireless.radio0)
+    device="${radio#wireless.}"
+    band="$(uci -q get "$radio.band")"
+
+    case "$band" in
+        5g)
+            ssid="Mir3-5GHz"
             uci set "$radio.txpower=21" || exit 1
             ;;
-        wireless.radio1)
+        2g)
+            ssid="Mir3-2.4GHz"
             uci set "$radio.txpower=36" || exit 1
             ;;
-    esac
-
-    device="${radio#wireless.}"
-    case "$device" in
-        radio0) ssid="Mir3-5GHz" ;;
-        radio1) ssid="Mir3-2.4GHz" ;;
         *)
-            logger -t miwifi-wireless "Unexpected radio device $device; defaults not applied"
+            logger -t miwifi-wireless "Unexpected band '$band' on $device; defaults not applied"
             exit 1
             ;;
     esac
+
     found=0
 
     ifaces="$(uci show wireless 2>/dev/null |
