@@ -28,7 +28,7 @@ The build includes BIRD for BGP routing, WireGuard support, diagnostic tools, an
 | BIRD 3 | BGP routing |
 | WireGuard | VPN tunnel support |
 | LuCI | Web administration interface |
-| iperf3 | Network throughput testing |
+| iperf3 | Network throughput testing (running as service) |
 | htop | Process and resource monitoring |
 | curl | Transfer data and make HTTP/HTTPS requests from the command line |
 | wget-ssl | Download files over HTTP/HTTPS with SSL/TLS support |
