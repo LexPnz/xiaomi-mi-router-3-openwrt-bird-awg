@@ -93,6 +93,11 @@ jobs:
             cp -a "$AWG_SOURCE/$package" "$AWG_FEED/"
           done
 
+          echo "=== Проверка исходника AmneziaWG ==="
+          grep -R -n -A 8 -B 3 \
+            'ip6_dst_lookup_flow' \
+            "$AWG_FEED/kmod-amneziawg" || true
+
           # IPv4-only adaptation: IPv6 socket support is conditional in
           # the upstream module source; do not depend on the IPv6-only
           # OpenWrt kmod-udptunnel6 package.
