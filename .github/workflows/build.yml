@@ -75,8 +75,51 @@ jobs:
         working-directory: openwrt
         run: |
           set -eux
+
+          AWG_COMMIT="03b62269e2edc168504f057cffaafda11b25ed92"
+          AWG_SOURCE="$RUNNER_TEMP/awg-openwrt"
+          AWG_FEED="$RUNNER_TEMP/awg-feed"
+
+          git init "$AWG_SOURCE"
+          git -C "$AWG_SOURCE" remote add origin \
+            https://github.com/LexPnz/awg-openwrt.git
+          git -C "$AWG_SOURCE" fetch --depth 1 origin "$AWG_COMMIT"
+          git -C "$AWG_SOURCE" checkout --detach FETCH_HEAD
+          test "$(git -C "$AWG_SOURCE" rev-parse HEAD)" = "$AWG_COMMIT"
+
+          mkdir -p "$AWG_FEED"
+          for package in kmod-amneziawg amneziawg-tools luci-proto-amneziawg; do
+            test -f "$AWG_SOURCE/$package/Makefile"
+            cp -a "$AWG_SOURCE/$package" "$AWG_FEED/"
+          done
+
+          # IPv4-only adaptation: IPv6 socket support is conditional in
+          # the upstream module source; do not depend on the IPv6-only
+          # OpenWrt kmod-udptunnel6 package.
+          python3 - "$AWG_FEED/kmod-amneziawg/Makefile" <<'PYAWG'
+          import pathlib, sys
+          p = pathlib.Path(sys.argv[1])
+          s = p.read_text()
+          lines = s.splitlines(keepends=True)
+          matches = [
+              line for line in lines
+              if line.strip().startswith("+kmod-udptunnel6")
+          ]
+          if len(matches) != 1:
+              raise SystemExit(
+                  f"Expected one kmod-udptunnel6 dependency, found {len(matches)}"
+              )
+          p.write_text("".join(
+              line for line in lines
+              if not line.strip().startswith("+kmod-udptunnel6")
+          ))
+          PYAWG
+
+          echo "src-link awg $AWG_FEED" >> feeds.conf.default
+
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+
 
           cp "$GITHUB_WORKSPACE/config/.config" .config
 
@@ -116,15 +159,16 @@ jobs:
               exit 1
             fi
           done
-          grep -E '^(CONFIG_PACKAGE_(bird3|wireguard-tools|luci-proto-wireguard)=y)$' .config || true
+          grep -E '^(CONFIG_PACKAGE_(bird3|kmod-amneziawg|amneziawg-tools|luci-proto-amneziawg)=y)$' .config || true
 
           for option in \
             CONFIG_PACKAGE_bird3 \
             CONFIG_PACKAGE_bird3c \
             CONFIG_PACKAGE_htop \
             CONFIG_PACKAGE_iperf3 \
-            CONFIG_PACKAGE_wireguard-tools \
-            CONFIG_PACKAGE_luci-proto-wireguard; do
+            CONFIG_PACKAGE_kmod-amneziawg \
+            CONFIG_PACKAGE_amneziawg-tools \
+            CONFIG_PACKAGE_luci-proto-amneziawg; do
             if ! grep -qx "${option}=y" .config; then
               echo "::error::Required option missing after defconfig: ${option}=y"
               exit 1
@@ -154,7 +198,7 @@ jobs:
             exit 1
           fi
 
-          for pkg in bird3 bird3c htop iperf3 luci-proto-wireguard wireguard-tools; do
+          for pkg in bird3 bird3c htop iperf3 kmod-amneziawg amneziawg-tools luci-proto-amneziawg; do
             if ! grep -Eq "^${pkg} -" "$MANIFEST"; then
               echo "::error::Required package missing from manifest: $pkg"
               exit 1
@@ -194,8 +238,11 @@ jobs:
             lib/apk/packages/bird3c.list \
             lib/apk/packages/htop.list \
             lib/apk/packages/iperf3.list \
-            lib/apk/packages/luci-proto-wireguard.list \
-            lib/apk/packages/wireguard-tools.list; do
+            usr/bin/awg \
+            lib/netifd/proto/amneziawg.sh \
+            lib/apk/packages/kmod-amneziawg.list \
+            lib/apk/packages/amneziawg-tools.list \
+            lib/apk/packages/luci-proto-amneziawg.list; do
             if ! grep -Fq "squashfs-root/$path" "$CONTENTS"; then
               echo "::error::Required file missing from firmware rootfs: /$path"
               exit 1
@@ -216,7 +263,7 @@ jobs:
           if [ -f openwrt/.config ]; then
             cp openwrt/.config "$OUT/final.config"
             sed -i '/WECHAT/Id' "$OUT/final.config"
-            grep -E '^(CONFIG_PACKAGE_(bird3|bird3c|htop|iperf3|wireguard-tools|luci-proto-wireguard)=y|CONFIG_IPV6=y)' \
+            grep -E '^(CONFIG_PACKAGE_(bird3|bird3c|htop|iperf3|kmod-amneziawg|amneziawg-tools|luci-proto-amneziawg)=y|CONFIG_IPV6=y)' \
               openwrt/.config > "$OUT/key-options.txt" || true
           fi
 
