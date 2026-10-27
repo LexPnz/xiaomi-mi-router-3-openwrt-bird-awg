@@ -93,6 +93,14 @@ jobs:
             cp -a "$AWG_SOURCE/$package" "$AWG_FEED/"
           done
 
+          echo "=== Добавление патча ip6_dst_lookup_flow для Linux 6.12 ==="
+          AWG_PATCH="$GITHUB_WORKSPACE/overlay/feeds/awg/kmod-amneziawg/patches/100-ip6-dst-lookup-flow-linux-612.patch"
+          test -f "$AWG_PATCH"
+          mkdir -p "$AWG_FEED/kmod-amneziawg/patches"
+          cp "$AWG_PATCH" "$AWG_FEED/kmod-amneziawg/patches/"
+          test -f "$AWG_FEED/kmod-amneziawg/patches/100-ip6-dst-lookup-flow-linux-612.patch"
+          cat "$AWG_FEED/kmod-amneziawg/patches/100-ip6-dst-lookup-flow-linux-612.patch"
+
           echo "=== Проверка исходника AmneziaWG ==="
           grep -R -n -A 8 -B 3 \
             'ip6_dst_lookup_flow' \
