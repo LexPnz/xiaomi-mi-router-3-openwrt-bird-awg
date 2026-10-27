@@ -173,9 +173,22 @@ jobs:
             CONFIG_PACKAGE_iperf3 \
             CONFIG_PACKAGE_kmod-amneziawg \
             CONFIG_PACKAGE_amneziawg-tools \
-            CONFIG_PACKAGE_luci-proto-amneziawg; do
+            CONFIG_PACKAGE_luci-proto-amneziawg \
+            CONFIG_PACKAGE_luci-i18n-amneziawg-ru; do
             if ! grep -qx "${option}=y" .config; then
               echo "::error::Required option missing after defconfig: ${option}=y"
+              exit 1
+            fi
+          done
+
+          echo "=== Проверка отключения стандартного WireGuard ==="
+          for option in \
+            CONFIG_PACKAGE_kmod-wireguard \
+            CONFIG_PACKAGE_wireguard-tools \
+            CONFIG_PACKAGE_luci-proto-wireguard \
+            CONFIG_PACKAGE_luci-i18n-wireguard-ru; do
+            if grep -qx "${option}=y" .config; then
+              echo "::error::Standard WireGuard package must be disabled: ${option}"
               exit 1
             fi
           done
@@ -203,12 +216,21 @@ jobs:
             exit 1
           fi
 
-          for pkg in bird3 bird3c htop iperf3 kmod-amneziawg amneziawg-tools luci-proto-amneziawg; do
+          for pkg in bird3 bird3c htop iperf3 kmod-amneziawg amneziawg-tools luci-proto-amneziawg luci-i18n-amneziawg-ru; do
             if ! grep -Eq "^${pkg} -" "$MANIFEST"; then
               echo "::error::Required package missing from manifest: $pkg"
               exit 1
             fi
             echo "OK manifest: $pkg"
+          done
+
+          echo "=== Проверка отсутствия стандартного WireGuard в манифесте ==="
+          for pkg in kmod-wireguard wireguard-tools luci-proto-wireguard luci-i18n-wireguard-ru; do
+            if grep -Eq "^${pkg} -" "$MANIFEST"; then
+              echo "::error::Unexpected standard WireGuard package in firmware: $pkg"
+              exit 1
+            fi
+            echo "OK absent from manifest: $pkg"
           done
 
           echo "=== Поиск sysupgrade-образа ==="
@@ -247,12 +269,22 @@ jobs:
             lib/netifd/proto/amneziawg.sh \
             lib/apk/packages/kmod-amneziawg.list \
             lib/apk/packages/amneziawg-tools.list \
-            lib/apk/packages/luci-proto-amneziawg.list; do
+            lib/apk/packages/luci-proto-amneziawg.list \
+            lib/apk/packages/luci-i18n-amneziawg-ru.list; do
             if ! grep -Fq "squashfs-root/$path" "$CONTENTS"; then
               echo "::error::Required file missing from firmware rootfs: /$path"
               exit 1
             fi
             echo "OK rootfs: /$path"
+          done
+
+          echo "=== Проверка отсутствия пакетов WireGuard в rootfs ==="
+          for pkg in kmod-wireguard wireguard-tools luci-proto-wireguard luci-i18n-wireguard-ru; do
+            if grep -Fq "squashfs-root/lib/apk/packages/${pkg}.list" "$CONTENTS"; then
+              echo "::error::Unexpected standard WireGuard package file in rootfs: $pkg"
+              exit 1
+            fi
+            echo "OK absent from rootfs: $pkg"
           done
 
           echo "=== Все обязательные пакеты проверены ==="
@@ -268,7 +300,7 @@ jobs:
           if [ -f openwrt/.config ]; then
             cp openwrt/.config "$OUT/final.config"
             sed -i '/WECHAT/Id' "$OUT/final.config"
-            grep -E '^(CONFIG_PACKAGE_(bird3|bird3c|htop|iperf3|kmod-amneziawg|amneziawg-tools|luci-proto-amneziawg)=y|CONFIG_IPV6=y)' \
+            grep -E '^(CONFIG_PACKAGE_(bird3|bird3c|htop|iperf3|kmod-amneziawg|amneziawg-tools|luci-proto-amneziawg|luci-i18n-amneziawg-ru)=y|CONFIG_IPV6=y)' \
               openwrt/.config > "$OUT/key-options.txt" || true
           fi
 
@@ -311,7 +343,8 @@ jobs:
             exit 1
           fi
 
-          cp "${IMAGES[0]}" "$OUT/"
+          DEST="openwrt-xiaomi-mir3-ru-bird-awg3-ipv4only-cpu600-ramips-mt7620-xiaomi_miwifi-r3-squashfs-sysupgrade.bin"
+          cp "${IMAGES[0]}" "$OUT/$DEST"
           cd "$OUT"
           sha256sum ./*.bin > sha256sums.txt
           ls -lh
