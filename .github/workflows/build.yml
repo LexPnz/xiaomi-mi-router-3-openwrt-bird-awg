@@ -145,7 +145,23 @@ jobs:
           echo "--- config before defconfig ---"
           grep -E '^CONFIG_PACKAGE_(bird3|bird3c)=' .config || true
 
-          make defconfig
+          mkdir -p "$RUNNER_TEMP/mir3-build-logs"
+
+          run_logged() {
+            name="$1"
+            shift
+            set +e
+            "$@" 2>&1 | tee "$RUNNER_TEMP/mir3-build-logs/$name.log"
+            rc=${PIPESTATUS[0]}
+            set -e
+            echo "$name exit code: $rc"
+            if [ "$rc" -ne 0 ]; then
+              echo "::error::$name failed with exit code $rc"
+              false
+            fi
+          }
+
+          run_logged defconfig make defconfig
 
           echo "=== Проверка обязательных пакетов после defconfig ==="
           for option in \
@@ -199,8 +215,8 @@ jobs:
           fi
 
           echo "=== Конфигурация проверена ==="
-          make download -j"$(nproc)"
-          make -j"$(nproc)" V=s
+          run_logged download make download -j"$(nproc)"
+          run_logged build make -j"$(nproc)" V=s
 
       - name: Verify required packages in firmware
         working-directory: openwrt
@@ -296,6 +312,15 @@ jobs:
           set -u
           OUT="$GITHUB_WORKSPACE/release-files/diagnostics"
           mkdir -p "$OUT"
+
+          LOG_DIR="$RUNNER_TEMP/mir3-build-logs"
+          if [ -d "$LOG_DIR" ]; then
+            cp -a "$LOG_DIR/." "$OUT/"
+            echo "=== Build logs copied ==="
+            ls -lh "$OUT"
+          else
+            echo "Build log directory not found: $LOG_DIR"
+          fi
 
           if [ -f openwrt/.config ]; then
             cp openwrt/.config "$OUT/final.config"
