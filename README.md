@@ -1,9 +1,9 @@
 [English](README.md) | [Русский](README.ru.md)
-# Xiaomi Mi Router 3 — Custom OpenWrt with BIRD, WireGuard and 600 MHz CPU
+# Xiaomi Mi Router 3 — Custom OpenWrt with BIRD, AmneziaWG and 600 MHz CPU
 
 Custom OpenWrt firmware for the **Xiaomi Mi Router 3 (MiWiFi R3)**, based on **OpenWrt 25.12.6**.
 
-The build includes BIRD for BGP routing, WireGuard support, diagnostic tools, and a CPU frequency configuration targeting 600 MHz.
+The build includes BIRD for BGP routing, AmneziaWG (WireGuard) support, diagnostic tools, and a CPU frequency configuration targeting 600 MHz.
 
 ## Features
 
@@ -11,7 +11,7 @@ The build includes BIRD for BGP routing, WireGuard support, diagnostic tools, an
 - **MediaTek MT7620A** platform
 - CPU frequency configured for **600 MHz**
 - **BIRD 3** for BGP routing
-- **WireGuard** support
+- **AmneziaWG (WireGuard)** support
 - LuCI web interface
 - `iperf3` for network throughput testing
 - `htop` for process and resource monitoring
@@ -26,7 +26,7 @@ The build includes BIRD for BGP routing, WireGuard support, diagnostic tools, an
 | Component | Purpose |
 |---|---|
 | BIRD 3 | BGP routing |
-| WireGuard | VPN tunnel support |
+| AmneziaWG | VPN tunnel support |
 | LuCI | Web administration interface |
 | iperf3 | Network throughput testing (running as a service) |
 | htop | Process and resource monitoring |
@@ -56,7 +56,7 @@ The build includes BIRD for BGP routing, WireGuard support, diagnostic tools, an
 
 - Default root password: `0123456789`
 - SSH port: `22`
-- SSH access is allowed from LAN, WAN, and the WireGuard firewall zone.
+- SSH access is allowed from LAN, WAN, and the AmneziaWG firewall zone.
 
 **Security note:** These are default credentials intended for this custom build. Consider the security implications before exposing the router to untrusted networks.
 
@@ -66,11 +66,11 @@ BIRD is included with a template configuration. It is not preconfigured with a l
 
 Configure the local AS number, router ID, peer addresses, remote AS numbers, and routing policies for your own network before relying on BGP routes.
 
-## WireGuard
+## AmneziaWG
 
-WireGuard tools and LuCI protocol support are included.
+AmneziaWG tools and LuCI protocol support are included.
 
-The build initializes the `wg0` interface, but a working tunnel requires your own WireGuard private key, peer public key, endpoint, allowed IP ranges, and any required routing and firewall settings.
+The build initializes the `awg0` interface, but a working tunnel requires your own AmneziaWG private key, peer public key, endpoint, allowed IP ranges, and any required routing and firewall settings.
 
 Do not publish private keys or other secrets in the repository.
 

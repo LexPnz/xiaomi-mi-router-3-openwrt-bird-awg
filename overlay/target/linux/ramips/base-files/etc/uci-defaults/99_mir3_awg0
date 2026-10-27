@@ -1,0 +1,25 @@
+#!/bin/sh
+
+[ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = "xiaomi,miwifi-r3" ] || exit 0
+
+uci -q get network.awg0 >/dev/null || uci set network.awg0='interface' || exit 1
+uci set network.awg0.proto='amneziawg' || exit 1
+uci set network.awg0.auto='1' || exit 1
+uci -q delete network.awg0.addresses
+uci -q delete network.awg0.listen_port
+uci -q delete network.awg0.private_key
+
+uci -q delete firewall.wg.network
+uci add_list firewall.wg.network='awg0' || exit 1
+
+# Маршрут до BGP-сервера ANTIFILTER.NETWORK через AmneziaWG.
+uci -q delete network.antifilter_bgp_route
+uci set network.antifilter_bgp_route='route'
+uci set network.antifilter_bgp_route.interface='awg0'
+uci set network.antifilter_bgp_route.target='45.154.73.71/32'
+
+uci commit network || exit 1
+uci commit firewall || exit 1
+
+logger -t mir3-amneziawg 'Empty AmneziaWG interface configured'
+exit 0
