@@ -12,11 +12,11 @@ uci -q delete network.awg0.private_key
 uci -q delete firewall.wg.network
 uci add_list firewall.wg.network='awg0' || exit 1
 
-# Маршрут до BGP-сервера ANTIFILTER.NETWORK через AmneziaWG.
-uci -q delete network.antifilter_bgp_route
-uci set network.antifilter_bgp_route='route'
-uci set network.antifilter_bgp_route.interface='awg0'
-uci set network.antifilter_bgp_route.target='45.154.73.71/32'
+# Маршрут до BGP-сервера ANTIFILTER.NETWORK через AmneziaWG, вообще он уже есть в bird.conf
+# uci -q delete network.antifilter_bgp_route
+# uci set network.antifilter_bgp_route='route'
+# uci set network.antifilter_bgp_route.interface='awg0'
+# uci set network.antifilter_bgp_route.target='45.154.73.71/32'
 
 uci commit network || exit 1
 uci commit firewall || exit 1

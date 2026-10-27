@@ -87,6 +87,14 @@ jobs:
           git -C "$AWG_SOURCE" checkout --detach FETCH_HEAD
           test "$(git -C "$AWG_SOURCE" rev-parse HEAD)" = "$AWG_COMMIT"
 
+          echo "=== Применение IPv4-only патча LuCI AmneziaWG ==="
+          AWG_LUCI_PATCH="$GITHUB_WORKSPACE/overlay/feeds/awg/luci-proto-amneziawg/patches/100-ipv4-only-import-generator.patch"
+          test -s "$AWG_LUCI_PATCH"
+          git -C "$AWG_SOURCE" apply --check "$AWG_LUCI_PATCH"
+          git -C "$AWG_SOURCE" apply "$AWG_LUCI_PATCH"
+          git -C "$AWG_SOURCE" diff --check
+          node --check "$AWG_SOURCE/luci-proto-amneziawg/htdocs/luci-static/resources/protocol/amneziawg.js"
+
           mkdir -p "$AWG_FEED"
           for package in kmod-amneziawg amneziawg-tools luci-proto-amneziawg; do
             test -f "$AWG_SOURCE/$package/Makefile"
@@ -386,6 +394,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: xiaomi-mi-router-3-openwrt
-          path: release-files/*
+          path: |
+            release-files/*.bin
+            release-files/sha256sums.txt
           if-no-files-found: error
           retention-days: 30
