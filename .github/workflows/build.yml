@@ -384,7 +384,7 @@ jobs:
             exit 1
           fi
 
-          DEST="openwrt-xiaomi-mir3-ru-bird-awg3-ipv4only-cpu600-ramips-mt7620-xiaomi_miwifi-r3-squashfs-sysupgrade.bin"
+          DEST="openwrt-xiaomi-mir3-ru-bird-awg-ipv4only-cpu600-ramips-mt7620-xiaomi_miwifi-r3-squashfs-sysupgrade.bin"
           cp "${IMAGES[0]}" "$OUT/$DEST"
           cd "$OUT"
           sha256sum ./*.bin > sha256sums.txt
