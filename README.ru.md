@@ -61,6 +61,13 @@
 
 **Примечание по безопасности:** это учётные данные по умолчанию, предусмотренные данной пользовательской сборкой. Перед предоставлением доступа к роутеру из недоверенных сетей оцените связанные с этим риски безопасности.
 
+## VPN через BGP
+
+Инструкции по настройке BIRD 3 с AmneziaWG 3.1 и маршрутизации VPN-трафика через BGP:
+
+- [English documentation](overlay/files/root/README-VPN-OVER-BGP.md)
+- [Документация на русском](overlay/files/root/README-VPN-OVER-BGP.ru.md)
+
 ## BIRD и BGP
 
 BIRD включён в сборку с шаблонной конфигурацией. Локальный номер AS и BGP-соседи заранее не настроены.
@@ -133,98 +140,6 @@ BIRD включён в сборку с шаблонной конфигураци
 Если рабочий процесс сборки публикует файлы прошивки, скачивайте их из соответствующего запуска GitHub Actions или из релиза.
 
 Если предоставлен файл `sha256sums.txt`, перед прошивкой проверьте с его помощью контрольную сумму загруженного образа.
-
-## Локальная сборка Xiaomi Mi Router 3 в WSL Ubuntu
-
-### 1. Установка зависимостей
-
-```bash
-sudo apt-get update
-sudo apt-get install -y build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget libelf-dev ecj fastjar java-propose-classpath python3 python3-dev python3-pyelftools python3-venv qemu-utils squashfs-tools
-```
-
-### 2. Клонирование репозитория проекта
-
-```bash
-cd ~
-git clone https://github.com/LexPnz/xiaomi-mi-router-3-openwrt-bird-wg.git github-lexpnz-xiaomi-mi-router-3-openwrt-bird-wg
-cd ~/github-lexpnz-xiaomi-mi-router-3-openwrt-bird-wg
-```
-
-### 3. Загрузка закреплённой версии OpenWrt
-
-Команды выполняются из корня репозитория проекта. Исходники OpenWrt будут находиться в подкаталоге `openwrt`.
-
-```bash
-cd ~/github-lexpnz-xiaomi-mi-router-3-openwrt-bird-wg || exit 1
-
-git init openwrt
-git -C openwrt remote add origin https://github.com/openwrt/openwrt.git
-
-OPENWRT_COMMIT="$(cat OPENWRT_COMMIT)"
-git -C openwrt fetch --depth 1 origin "$OPENWRT_COMMIT"
-git -C openwrt checkout --detach FETCH_HEAD
-
-test "$(git -C openwrt rev-parse HEAD)" = "$OPENWRT_COMMIT" \
-  && echo "OK: OpenWrt commit совпадает"
-```
-
-### 4. Применение патча и overlay
-
-```bash
-cd ~/github-lexpnz-xiaomi-mi-router-3-openwrt-bird-wg || exit 1
-
-git -C openwrt apply --check "$PWD/patches/0001-mir3-customizations.patch"
-git -C openwrt apply "$PWD/patches/0001-mir3-customizations.patch"
-cp -a overlay/. openwrt/
-```
-
-### 5. Подготовка feeds и конфигурации
-
-```bash
-cd ~/github-lexpnz-xiaomi-mi-router-3-openwrt-bird-wg/openwrt || exit 1
-
-./scripts/feeds update -a
-./scripts/feeds install -a
-cp ../config/.config .config
-make defconfig
-```
-
-### 6. Загрузка исходников и сборка
-
-Перед сборкой сбросьте `PATH`, чтобы Windows-программы, включая компоненты NVIDIA, не мешали работе Linux-инструментов.
-
-```bash
-cd ~/github-lexpnz-xiaomi-mi-router-3-openwrt-bird-wg/openwrt || exit 1
-
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-
-make download -j"$(nproc)"
-
-set -o pipefail
-make -j"$(nproc)" V=s 2>&1 | tee ~/mir3-local-build.log
-```
-
-`pipefail` позволяет обнаружить ошибку `make`, даже если вывод передаётся через `tee`.
-
-### 7. Расположение готовой прошивки
-
-Готовые образы Xiaomi Mi Router 3 находятся в каталоге:
-
-`openwrt/bin/targets/ramips/mt7620/`
-
-Проверить sysupgrade-образ и контрольные суммы:
-
-```bash
-find ~/github-lexpnz-xiaomi-mi-router-3-openwrt-bird-wg/openwrt/bin/targets/ramips/mt7620 \
-  -maxdepth 1 -type f \
-  \( -name '*xiaomi_miwifi-r3*squashfs-sysupgrade.bin' -o -name 'sha256sums' \) \
-  -printf '%TY-%Tm-%Td %TH:%TM  %s bytes  %f\n'
-```
-
-Лог сборки: `~/mir3-local-build.log`.
-
-**Примечание:** этот порядок предназначен для первичной сборки в чистом каталоге. При повторной сборке не нужно повторно инициализировать Git, применять уже применённый патч или копировать overlay без проверки состояния исходников.
 
 ## Отказ от ответственности
 
