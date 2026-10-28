@@ -1,7 +1,5 @@
 #!/bin/sh
 
-
-
 [ "$(cat /tmp/sysinfo/board_name 2>/dev/null)" = "xiaomi,miwifi-r3" ] || exit 0
 
 # Бесконечная сессия LuCI (нулевой тайм-аут).
@@ -27,5 +25,5 @@ uci commit system || exit 1
 
 (printf '%s\n' '0123456789'; sleep 1; printf '%s\n' '0123456789') | passwd root || exit 1
 
-logger -t mir3-defaults 'Hostname and root password configured'
+logger -t mir3-defaults 'Hostname and root password configured by FIRMWARE'
 exit 0

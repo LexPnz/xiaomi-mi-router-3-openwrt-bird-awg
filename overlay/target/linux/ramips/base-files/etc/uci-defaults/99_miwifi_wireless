@@ -64,5 +64,5 @@ for radio in $radios; do
 done
 
 uci commit wireless || exit 1
-logger -t miwifi-wireless "Default Wi-Fi APs configured"
+logger -t miwifi-wireless "Default Wi-Fi APs configured by FIRMWARE"
 exit 0

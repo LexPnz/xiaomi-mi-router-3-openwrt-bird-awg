@@ -93,7 +93,9 @@ BIRD включён в сборку с шаблонной конфигураци
 │   └── .config
 ├── overlay/
 │   ├── files/
-│   └── target/
+│   ├── target/
+│   ├── feeds/awg/luci-proto-amneziawg/patches/100-ipv4-only-import-generator.patch
+│   └── feeds/awg/kmod-amneziawg/patches/100-ip6-dst-lookup-flow-linux-612.patch
 ├── patches/
 │   └── 0001-mir3-customizations.patch
 ├── OPENWRT_COMMIT
@@ -106,7 +108,6 @@ BIRD включён в сборку с шаблонной конфигураци
 - `overlay/` — пользовательские файлы, копируемые в исходное дерево OpenWrt во время сборки.
 - `OPENWRT_COMMIT` — точная ревизия исходного кода OpenWrt, используемая при сборке.
 - `.github/workflows/build.yml` — рабочий процесс GitHub Actions для сборки прошивки.
-- `sha256sums.txt` — файл контрольных сумм, если он создаётся или поддерживается для публикуемых артефактов прошивки.
 
 ## Сборка прошивки
 
