@@ -34,7 +34,7 @@ The build includes BIRD for BGP routing, AmneziaWG (WireGuard) support, diagnost
 | wget-ssl | Download files over HTTP/HTTPS with SSL/TLS support |
 | mtr | Network path diagnostics |
 | traceroute | Route tracing |
-| host, dig | DNS troubleshooting |
+| host, dig , whois| DNS troubleshooting |
 
 ## Default configuration
 
